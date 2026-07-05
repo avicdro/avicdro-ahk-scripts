@@ -8,9 +8,9 @@ Colección personal de scripts de **AutoHotkey v2** para automatizar tareas del 
 
 ## 📑 Índice
 
-| # | Script | Descripción | Atajo |
-|---|--------|-------------|-------|
-| 1 | [corrector-ortografico-ollama.ahk](corrector-ortografico-ollama.ahk) | Corrige ortografía y gramática de cualquier texto seleccionado usando IA local (Ollama) | `Alt+G` |
+| # | Script | Descripción | Atajos |
+|---|--------|-------------|--------|
+| 1 | [ai-suite-ollama.ahk](ai-suite-ollama.ahk) | Suite de IA con Ollama: corregir, traducir, resumir y generar respuestas | `CapsLock+G/T/R/Enter/V/H` |
 
 ---
 
@@ -23,9 +23,32 @@ Colección personal de scripts de **AutoHotkey v2** para automatizar tareas del 
 
 ---
 
+## ⌨️ Atajos — ai-suite-ollama.ahk
+
+Todos los atajos usan **CapsLock** como tecla modificadora (las mayúsculas quedan desactivadas automáticamente):
+
+| Atajo | Función | Comportamiento |
+|-------|---------|---------------|
+| `CapsLock + G` | Corregir ortografía | Pega el resultado reemplazando el texto |
+| `CapsLock + T` | Traducir | Muestra ventana con la traducción |
+| `CapsLock + R` | Resumir | Muestra ventana con el resumen |
+| `CapsLock + Enter` | Generar respuesta | Muestra ventana con la respuesta |
+| `CapsLock + V` | Ver historial | Recupera textos originales de correcciones |
+| `CapsLock + H` | Ayuda | Muestra todos los atajos |
+
+### Contexto opcional
+
+Escribe `[instrucciones]` al inicio del texto seleccionado:
+
+- `[francés] hola mundo` → traduce al francés
+- `[5 viñetas] texto largo...` → resume en 5 viñetas
+- `[Tono formal] hola, te escribo...` → corrige con ese tono
+
+---
+
 ## 🛠️ Requisitos por script
 
-### corrector-ortografico-ollama.ahk
+### ai-suite-ollama.ahk
 - [Ollama](https://ollama.com/) corriendo en local (`ollama serve`)
 - Al menos un modelo descargado (recomendado: `gemma4`, `qwen3.5` o `deepseek-v4-flash`)
 
