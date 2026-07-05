@@ -49,6 +49,11 @@ global OLLAMA_ENDPOINT := "http://localhost:11434/api/generate"
 ; Número máximo de entradas en el historial de correcciones.
 global HISTORIAL_MAX := 50
 
+; Tamaño de fuente para las ventanas emergentes (Traducir/Resumir/Generar).
+; Si los textos se ven demasiado pequeños, sube este valor.
+; Valores típicos: s10 (por defecto), s12, s14, s16...
+global GUI_FUENTE_TAMANO := "s16"
+
 ; ─────────────────────────────────────────────────────────────────
 ;  FIN CONFIGURACIÓN
 ; ─────────────────────────────────────────────────────────────────
@@ -460,29 +465,84 @@ ObtenerTextoSeleccionado() {
 ; ════════════════════════════════════════════════════════════════
 
 MostrarVentanaResultado(titulo, textoOriginal, resultado) {
-    g := Gui("+AlwaysOnTop +Resize +MinSize400x300", "AI Suite — " . titulo)
-    g.SetFont("s10", "Segoe UI")
+    global GUI_FUENTE_TAMANO
+    g := Gui("+AlwaysOnTop +Resize +MinSize800x600", "AI Suite — " . titulo)
+    g.SetFont(GUI_FUENTE_TAMANO, "Segoe UI")
 
     ; ── Panel original ──
-    g.AddText("w600 Section cGray", "Texto original:")
-    g.AddEdit("w600 h80 ReadOnly vOriginal", textoOriginal)
+    g.AddText("xm cGray vLblOriginal", "Texto original:")
+    g.AddEdit("xm w760 h140 ReadOnly vOriginal", textoOriginal)
 
     ; ── Separador ──
-    g.AddText("w600 h2 0x10 BackgroundCCCCCC")  ; línea horizontal
+    g.AddText("xm w760 h2 0x10 vSeparador BackgroundCCCCCC")
 
     ; ── Panel resultado ──
-    g.AddText("w600 Section cNavy", "Resultado:")
-    editResultado := g.AddEdit("w600 h300 vResultado", resultado)
+    g.AddText("xm cNavy vLblResultado", "Resultado:")
+    editResultado := g.AddEdit("xm w760 h420 vResultado", resultado)
 
     ; ── Botones ──
-    g.AddButton("w120 h30 Section vBtnCopiar", "Copiar").OnEvent("Click", (*) => CopiarResultado(editResultado))
-    g.AddButton("x+10 w120 h30", "Cerrar").OnEvent("Click", (*) => g.Destroy())
+    g.AddButton("xm w140 h35 vBtnCopiar", "Copiar").OnEvent("Click", (*) => CopiarResultado(editResultado))
+    g.AddButton("x+10 w140 h35 vBtnCerrar", "Cerrar").OnEvent("Click", (*) => g.Destroy())
+
+    ; ── Redimensionado ──
+    g.OnEvent("Size", RedimensionarVentanaResultado)
 
     ; ── Atajo Esc para cerrar ──
     g.OnEvent("Escape", (*) => g.Destroy())
 
     ; ── Mostrar ──
     g.Show("AutoSize Center")
+}
+
+RedimensionarVentanaResultado(guiObj, minMax, width, height) {
+    if (minMax = -1)  ; minimizada
+        return
+
+    margen := 20
+    gap := 12
+    altoEtiqueta := 26
+    altoOriginal := 140
+    altoSeparador := 2
+    altoBotones := 35
+    ancho := width - (margen * 2)
+
+    ; Calcular alto disponible para el resultado
+    altoResultado := height - margen
+        - altoEtiqueta - gap - altoOriginal
+        - gap - altoSeparador
+        - gap - altoEtiqueta - gap
+        - altoBotones - margen
+
+    if (altoResultado < 150)
+        altoResultado := 150
+
+    y := margen
+
+    ; Etiqueta "Texto original:"
+    guiObj["LblOriginal"].Move(margen, y, ancho, altoEtiqueta)
+    y += altoEtiqueta + gap
+
+    ; Caja texto original
+    guiObj["Original"].Move(margen, y, ancho, altoOriginal)
+    y += altoOriginal + gap
+
+    ; Separador
+    guiObj["Separador"].Move(margen, y, ancho, altoSeparador)
+    y += altoSeparador + gap
+
+    ; Etiqueta "Resultado:"
+    guiObj["LblResultado"].Move(margen, y, ancho, altoEtiqueta)
+    y += altoEtiqueta + gap
+
+    ; Caja resultado
+    guiObj["Resultado"].Move(margen, y, ancho, altoResultado)
+
+    ; Botones abajo centrados
+    anchoBotones := 140 * 2 + 10
+    xBotones := (width - anchoBotones) // 2
+    yBotones := height - altoBotones - margen
+    guiObj["BtnCopiar"].Move(xBotones, yBotones, 140, altoBotones)
+    guiObj["BtnCerrar"].Move(xBotones + 150, yBotones, 140, altoBotones)
 }
 
 CopiarResultado(editCtrl) {
