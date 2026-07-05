@@ -102,12 +102,24 @@ CorregirSeleccion() {
             return
         }
 
-        ; Seguridad: si Ctrl+A seleccionó demasiado (ej: todo un panel
-        ; de chat), pedir selección manual para evitar corregir el historial
+        ; Si Ctrl+A seleccionó demasiado (ej: todo un panel de chat),
+        ; intentar seleccionar solo la última línea con End + Shift+Home
         if (StrLen(texto) > 3000) {
-            MostrarTooltip("Texto muy largo. Selecciona manualmente lo que quieres corregir.")
             A_Clipboard := oldClip
-            return
+            Send "{End}"
+            Sleep(50)
+            Send "+{Home}"
+            Sleep(100)
+            A_Clipboard := ""
+            Send "^c"
+            Sleep(150)
+            texto := A_Clipboard
+
+            if (Trim(texto) = "" || StrLen(texto) > 1000) {
+                MostrarTooltip("Texto muy largo. Selecciona manualmente lo que quieres corregir.")
+                A_Clipboard := oldClip
+                return
+            }
         }
     }
 
@@ -127,11 +139,14 @@ CorregirSeleccion() {
 
     ; Construir prompt del sistema
     sysPrompt := "Eres un corrector ortográfico y gramatical experto."
-        . " Corrige la ortografía, la gramática y la puntuación del texto."
-        . " Mantén SIEMPRE el estilo, el tono, el formato y el idioma original."
+        . " Tu ÚNICA tarea es corregir la ortografía, la gramática y la puntuación del texto que te proporciono."
+        . " Mantén SIEMPRE el estilo, el tono, el formato y el idioma original del autor."
         . " Auto-detecta el idioma (principalmente español, pero puede ser cualquier otro)."
-        . " NO añadas explicaciones, comentarios ni markdown."
-        . " Devuelve ÚNICAMENTE el texto corregido, nada más."
+        . " NO añadas explicaciones, comentarios, introducciones, despedidas ni markdown."
+        . " NO respondas con frases como 'Aquí tienes el texto corregido' ni nada similar."
+        . " Devuelve ÚNICAMENTE el texto corregido, sin ningún texto adicional antes o después."
+        . " Si el texto ya está correcto, devuélvelo exactamente igual."
+        . " Si el texto está vacío o no es texto, devuelve una cadena vacía."
 
     if (contexto != "")
         sysPrompt .= "`n`nCONTEXTO OBLIGATORIO que debes seguir: " contexto
