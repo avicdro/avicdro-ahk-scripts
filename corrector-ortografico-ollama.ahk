@@ -81,36 +81,29 @@ CorregirSeleccion() {
     oldClip := A_Clipboard
     A_Clipboard := ""
 
-    ; Copiar la selección actual
+    ; ── Fase 1: intentar copiar selección actual ──
     Send "^c"
-    if !ClipWait(1) {
-        MostrarTooltip("No hay texto seleccionado.")
-        A_Clipboard := oldClip
-        return
-    }
-
+    Sleep(150)  ; dar tiempo a que la app actualice el clipboard
     texto := A_Clipboard
 
-    ; Si no hay texto seleccionado, seleccionar todo el contenido del input
+    ; ── Fase 2: si no hay texto, intentar Ctrl+A (todo el input) ──
     if (Trim(texto) = "") {
-        A_Clipboard := oldClip
+        A_Clipboard := oldClip  ; restaurar por si acaso
         Send "^a"
-        Sleep(50)
+        Sleep(100)
         A_Clipboard := ""
         Send "^c"
-        if !ClipWait(1) {
-            MostrarTooltip("No hay texto para corregir.")
-            A_Clipboard := oldClip
-            return
-        }
+        Sleep(150)
         texto := A_Clipboard
+
         if (Trim(texto) = "") {
             MostrarTooltip("No hay texto para corregir.")
             A_Clipboard := oldClip
             return
         }
-        ; Seguridad: si Ctrl+A seleccionó demasiado texto (ej: todo un panel
-        ; de chat), pedir selección manual para evitar corregir todo el historial
+
+        ; Seguridad: si Ctrl+A seleccionó demasiado (ej: todo un panel
+        ; de chat), pedir selección manual para evitar corregir el historial
         if (StrLen(texto) > 3000) {
             MostrarTooltip("Texto muy largo. Selecciona manualmente lo que quieres corregir.")
             A_Clipboard := oldClip
