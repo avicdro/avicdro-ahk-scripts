@@ -9,10 +9,12 @@
 ;  Modelo:   Configurable (ver más abajo)
 ;
 ;  USO:
-;    1. Selecciona texto en cualquier aplicación.
+;    1. Selecciona texto en cualquier aplicación (o deja el cursor
+;       en un input/textarea sin seleccionar nada para corregir todo).
 ;    2. Pulsa Alt+G.
 ;    3. El texto corregido se pega automáticamente reemplazando la
-;       selección, y se añade al portapapeles como entrada nueva.
+;       selección (o todo el contenido si no había selección), y se
+;       añade al portapapeles como entrada nueva.
 ;       El texto original se guarda en un historial interno.
 ;
 ;  CONTEXTO OPCIONAL:
@@ -88,10 +90,32 @@ CorregirSeleccion() {
     }
 
     texto := A_Clipboard
+
+    ; Si no hay texto seleccionado, seleccionar todo el contenido del input
     if (Trim(texto) = "") {
-        MostrarTooltip("Selección vacía.")
         A_Clipboard := oldClip
-        return
+        Send "^a"
+        Sleep(50)
+        A_Clipboard := ""
+        Send "^c"
+        if !ClipWait(1) {
+            MostrarTooltip("No hay texto para corregir.")
+            A_Clipboard := oldClip
+            return
+        }
+        texto := A_Clipboard
+        if (Trim(texto) = "") {
+            MostrarTooltip("No hay texto para corregir.")
+            A_Clipboard := oldClip
+            return
+        }
+        ; Seguridad: si Ctrl+A seleccionó demasiado texto (ej: todo un panel
+        ; de chat), pedir selección manual para evitar corregir todo el historial
+        if (StrLen(texto) > 3000) {
+            MostrarTooltip("Texto muy largo. Selecciona manualmente lo que quieres corregir.")
+            A_Clipboard := oldClip
+            return
+        }
     }
 
     ; Restaurar el portapapeles al texto original inmediatamente
@@ -252,6 +276,9 @@ LlamarOllama(sysPrompt, userText) {
     stream.Close()
 
     http := ComObject("WinHttp.WinHttpRequest.5.1")
+    ; Aumentar timeouts: 60s para resolver, conectar, enviar y recibir
+    ; (por defecto WinHttp usa 30s, que puede ser corto al cargar el modelo)
+    http.SetTimeouts(60000, 60000, 60000, 60000)
     http.Open("POST", OLLAMA_ENDPOINT, false)
     http.SetRequestHeader("Content-Type", "application/json; charset=utf-8")
 
